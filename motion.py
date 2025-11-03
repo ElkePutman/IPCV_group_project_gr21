@@ -16,8 +16,17 @@ cigar = cv2.imread(CIGAR_PATH, cv2.IMREAD_UNCHANGED)
 
 def get_face_mesh_bounds(frame, face_mesh):
     """
-    Detect faces using MediaPipe FaceMesh.
-    Returns list of bounding boxes (x, y, w, h) per face and mouth regions.
+    Detects facial landmarks using MediaPipe FaceMesh.
+
+    Args:
+        frame: (np.ndarray) The input image (BGR format).
+        face_mesh: Initialized MediaPipe FaceMesh object.
+
+    Returns:
+        tuple:
+            - faces (list of tuples): List of bounding boxes for detected faces, formatted as (x, y, w, h).
+            - face_landmarks (list): List of MediaPipe face landmark objects for each detected face.
+            - mouth (list of tuples): List of bounding boxes for mouth regions, formatted as (x_min, y_min, x_max, y_max).
     """
     h, w = frame.shape[:2]
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -54,14 +63,18 @@ def get_face_mesh_bounds(frame, face_mesh):
 
 def overlay_transparent_image(bg, overlay, pos=(0, 0), size=(200, 150)):
     """
-    Add overlay image to the frame
-    Inputs:
-    - bg input frame
-    - image to be overlayed
-    - position of overlay
-    - size of overlayed image
+    Overlays a transparent image onto a background frame.
 
-    Returns the frame with the overlay added and the position of the overlay
+    Args:
+        bg (np.ndarray): The current frame (BGR format).
+        overlay (np.ndarray): The image to overlay.
+        pos (tuple): Top-left (x, y) coordinates where the overlay should be placed.
+        size (tuple): Desired size (width, height) of the overlay image.
+
+    Returns:
+        tuple:
+            - combined (np.ndarray): The resulting image with overlay applied.
+            - pos (tuple): The actual position used for overlay.
     """
     overlay = cv2.resize(overlay, (size[0], size[1]))
     combined = bg.copy()
@@ -95,12 +108,14 @@ def overlay_transparent_image(bg, overlay, pos=(0, 0), size=(200, 150)):
 
 def warp_face(frame, faces):
     """
-    Creates a swirl on the face
-    Inputs: - current frame
-    - Face landmarks
+    Applies a swirl effect to detected face regions.
 
-    Returns the frame with the warped face
+    Args:
+        frame (np.ndarray): The input video frame.
+        faces (list of tuples): List of bounding boxes for faces, formatted as (x, y, w, h).
 
+    Returns:
+        output (np.ndarray): The frame with the swirl effect applied to detected faces.
     """
     output = frame.copy()
     for (x, y, w, h) in faces:
@@ -117,47 +132,29 @@ def warp_face(frame, faces):
 
 def is_fist(hand_landmarks):
     """
-    Detect if hand shows a fist
-    Inputs: 
-    - Handlandmarks
+    Detects if the hand gesture represents a closed fist.
+
+    Args:
+        hand_landmarks: MediaPipe hand landmarks for one detected hand.
+
+    Returns:
+        bool: True if a fist gesture is detected, otherwise False.
     """
     fingers = []
     for tip_id in [8, 12, 16, 20]:
         fingers.append(hand_landmarks.landmark[tip_id].y > hand_landmarks.landmark[tip_id - 2].y)
     return sum(fingers) == 4
 
-# def is_hand(hand_landmarks):
-#     fingers = []
-#     for tip_id in [4,8,12,16,20]:
-#         if hand_landmarks.landmark[tip_id].y < hand_landmarks.landmark[tip_id - 2].y:
-#             fingers.append(0)  
-#         else:
-#             fingers.append(1)
-#     return sum(fingers) == 0
-
-# def is_thumb_down(hand_landmarks):
-    
-#     lm = hand_landmarks.landmark    
-#     thumb_tip = lm[4]
-#     thumb_low = lm[2]    
-#     is_thumb_extended = thumb_tip.y>thumb_low.y
-
-    
-#     folded = []
-#     for tip_id in [8, 12, 16, 20]:
-#         folded.append(lm[tip_id].y > lm[tip_id - 2].y)
-    
-#     all_folded = sum(folded) == 4
-
-#     return is_thumb_extended and all_folded
-
-
 
 def is_peace(hand_landmarks):
     """
-    Detect if hand shows a peace sign
-    Inputs: 
-    - Handlandmarks
+    Detects if the hand shows a peace sign gesture.
+
+    Args:
+        hand_landmarks: MediaPipe hand landmarks for one detected hand.
+
+    Returns:
+        bool: True if a peace sign is detected, otherwise False.
     """
     fingers=[]
     for tip_id in [8,12,16,20]:
@@ -169,9 +166,16 @@ def is_peace(hand_landmarks):
 
 def is_thumb_pink(hand_landmarks):
     """
-    Detect if both a thumb an pinky is extended
-    Inputs: 
-    - Handlandmarks
+    Detects if both the thumb and pinky fingers are extended while other fingers are folded.
+
+    Args:
+        hand_landmarks: MediaPipe hand landmarks for one detected hand.
+
+    Returns:
+        tuple:
+            - is_thumb_extended (bool): Whether the thumb is extended.
+            - pink_extended (bool): Whether the pinky is extended.
+            - all_folded (bool): Whether all other fingers are folded.
     """
     lm = hand_landmarks.landmark
     is_thumb_extended = lm[4].y<lm[3].y<lm[2].y<lm[1].y    
@@ -185,13 +189,19 @@ def is_thumb_pink(hand_landmarks):
     return is_thumb_extended, pink_extended, all_folded
 
 
-def is_smoker_roi(mouth, hand_landmarks, frame, finger_ids=[8, 12], debug=True):
+def is_smoker_roi(mouth, hand_landmarks, frame, finger_ids=[8, 12]):
     """
-    Detect if fingers overlap with mouth and overlay a cigar
-    Inputs: 
-    - Hand landmarks
-    - Mouth landmarks
-    - input frame
+    Detects whether the user's fingers overlap with the mouth region,
+    simulating a 'smoking' gesture for overlaying a cigar image.
+
+    Args:
+        mouth (list of tuples): Mouth region bounding boxes (x_min, y_min, x_max, y_max).
+        hand_landmarks: MediaPipe hand landmarks for one detected hand.
+        frame (np.ndarray): The current frame (BGR format).
+        finger_ids (list of int): Indices of fingers to check for overlap (default: [8, 12]).        
+
+    Returns:
+        bool: True if the finger region overlaps with the mouth region, otherwise False.
     """
 
     if not mouth or hand_landmarks is None:
@@ -213,19 +223,13 @@ def is_smoker_roi(mouth, hand_landmarks, frame, finger_ids=[8, 12], debug=True):
         y_max_f = max(y1, y2)
         finger_box = (x_min_f, y_min_f, x_max_f, y_max_f)
 
-        # if debug:
-        #     # Teken de finger box (blauw) en de tip (rood)
-        #     cv2.rectangle(frame, (x_min_f, y_min_f), (x_max_f, y_max_f), (255, 0, 0), 2)
-        #     # cv2.circle(frame, (x1, y1), 4, (0, 0, 255), -1)
 
-        # Check overlap met de mond-ROI
+
+        # Check overlap with mouth ROI
         for (xmin, ymin, xmax, ymax) in mouth:
             overlap_x = max(finger_box[0], xmin) < min(finger_box[2], xmax)
             overlap_y = max(finger_box[1], ymin) < min(finger_box[3], ymax)
             if overlap_x and overlap_y:
-                # if debug:
-                #     cv2.putText(frame, "Overlap!", (xmin, ymin - 10),
-                #                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 return True
 
     return False
@@ -236,12 +240,12 @@ face_mesh = mp_mesh.FaceMesh(max_num_faces=1, min_detection_confidence=0.5)
 
 
 cam = cv2.VideoCapture(0)
-print("Druk op 'q' om af te sluiten.")
+print("Press 'q' to exit")
 
 while cam.isOpened():
     success, frame = cam.read()
     if not success:
-        print("Camera frame niet beschikbaar.")
+        print("Camera frame not available.")
         continue
 
     faces, face_landmarks_list, mouth  = get_face_mesh_bounds(frame, face_mesh)
@@ -255,17 +259,14 @@ while cam.isOpened():
             h_img, w_img = frame.shape[:2]
             hat_center_x = int(top_forehead.x * w_img)
             hat_top_y = int(top_forehead.y * h_img) -int(h * 0.5)  # shift hat up
-        else:
-            hat_center_x = x + w // 2
-            hat_top_y = y - int(h * 0.5)
+        # else:
+        #     hat_center_x = x + w // 2
+        #     hat_top_y = y - int(h * 0.5)
 
         hat_width = int(w * 1.2) # 1.2* facewidth
         hat_height = int(hat_width * hat.shape[0] / hat.shape[1])
         hat_x = int(hat_center_x - hat_width / 2)
         hat_y = hat_top_y
-
-        # for (x_min_m, y_min_m, x_max_m, y_max_m) in mouth:
-        #     cv2.rectangle(frame, (x_min_m, y_min_m), (x_max_m, y_max_m), (0, 255, 0), 2)
 
         if not hands_detected.multi_hand_landmarks:
             frame, _ = overlay_transparent_image(frame, hat, pos=(hat_x, hat_y), size=(hat_width, hat_height))
