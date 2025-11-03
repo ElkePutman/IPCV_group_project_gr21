@@ -1,7 +1,7 @@
 # IPCV Group project
 
 This project is the **group assignment** for the *Image Processing & Computer Vision (IPCV)* course.  
-It consists of **three independent Python programs**, each implementing a different computer vision task using OpenCV and MediaPipe.
+It consists of **three independent Python programs**, each implementing a different exercise of the assignment using OpenCV and MediaPipe.
 
 ---
 
