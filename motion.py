@@ -225,7 +225,7 @@ def is_smoker_roi(mouth, hand_landmarks, frame, finger_ids=[8, 12]):
 
 
 
-        # Check overlap with mouth ROI
+        # Check overlap with mouth
         for (xmin, ymin, xmax, ymax) in mouth:
             overlap_x = max(finger_box[0], xmin) < min(finger_box[2], xmax)
             overlap_y = max(finger_box[1], ymin) < min(finger_box[3], ymax)
@@ -259,9 +259,7 @@ while cam.isOpened():
             h_img, w_img = frame.shape[:2]
             hat_center_x = int(top_forehead.x * w_img)
             hat_top_y = int(top_forehead.y * h_img) -int(h * 0.5)  # shift hat up
-        # else:
-        #     hat_center_x = x + w // 2
-        #     hat_top_y = y - int(h * 0.5)
+
 
         hat_width = int(w * 1.2) # 1.2* facewidth
         hat_height = int(hat_width * hat.shape[0] / hat.shape[1])
