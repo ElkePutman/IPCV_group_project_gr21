@@ -51,7 +51,7 @@ Press `q` to close the camera.
 
 
 ## File structure
-The expected file structure is shown below:
+The required file structure is shown below:
 
 ```bash
 IPCV_Group_project_group_21/

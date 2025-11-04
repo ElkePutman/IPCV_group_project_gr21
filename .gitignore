@@ -24,3 +24,6 @@ venv/
 # zip files
 *.zip
 
+# documents
+*.docx
+
